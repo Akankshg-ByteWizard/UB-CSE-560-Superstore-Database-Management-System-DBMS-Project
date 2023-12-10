@@ -79,8 +79,38 @@ The database schema includes the following tables:
 6. Create a trigger that automatically inserts a new record into the Shipping_Details table whenever a new order is inserted into the Order_Details table:
 
     ```sql
-    -- Trigger creation statements
-    ```
+    -- CREATE OR REPLACE FUNCTION insert_shipping_details()
+    RETURNS TRIGGER AS $$
+    BEGIN
+      -- Try to update the existing record with the new values
+      UPDATE Shipping_Details
+      SET Order_Date = NEW.Order_Date,
+          Order_Priority = NEW.Order_Priority,
+          Ship_Mode = NEW.Ship_Mode,
+          Country = (SELECT Country FROM Customer_Details WHERE Customer_ID = NEW.Customer_ID),
+          State = (SELECT State FROM Customer_Details WHERE Customer_ID = NEW.Customer_ID),
+          Region = (SELECT Region FROM Customer_Details WHERE Customer_ID = NEW.Customer_ID),
+          City = (SELECT City FROM Customer_Details WHERE Customer_ID = NEW.Customer_ID)
+      WHERE Order_ID = NEW.Order_ID;
+      
+      
+      -- If no record was updated, insert a new one
+      IF NOT FOUND THEN
+        INSERT INTO Shipping_Details (Order_ID, Order_Date, Order_Priority, Ship_Mode, Country, State, Region, City)
+        SELECT NEW.Order_ID, NEW.Order_Date, NEW.Order_Priority, NEW.Ship_Mode, c.Country, c.State, c.Region, c.City
+        FROM Customer_Details c
+        WHERE c.Customer_ID = NEW.Customer_ID;
+      END IF;
+      
+      RETURN NEW;
+    END;
+    $$ LANGUAGE plpgsql;
+    
+    CREATE TRIGGER trg_insert_shipping_details
+    AFTER INSERT ON Order_Details
+    FOR EACH ROW
+    EXECUTE FUNCTION insert_shipping_details();
+        ```
 
 ### Procedure
 
