@@ -136,6 +136,6 @@ The database schema includes the following tables:
 
 ## Contributors
 
-- [Your Name]
+- [Akanksh Gatla][https://github.com/Akankshg-ByteWizard]
 
 Feel free to contribute to this project by opening issues or submitting pull requests.
